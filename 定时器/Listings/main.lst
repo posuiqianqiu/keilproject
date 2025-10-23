@@ -1,0 +1,127 @@
+C51 COMPILER V9.54   MAIN                                                                  10/03/2025 10:33:09 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include "key.h"
+   3          #include "timer.h"
+   4          
+   5          // LED引脚定义（假设LED连接在P2口）
+   6          #define LED_PORT P2
+   7          
+   8          // 全局变量
+   9          unsigned int timer_count = 0;    // 定时计数器
+  10          bit flow_direction = 0;          // 流水方向：0-正向 1-反向
+  11          unsigned char led_pattern = 0xFE; // LED初始模式：1111 1110（D1亮）
+  12          
+  13          /**
+  14           * @brief 定时器中断服务函数
+  15           * @param 无
+  16           * @return 无
+  17           */
+  18          void Timer0_UserISR(void)
+  19          {
+  20   1          timer_count++;  // 定时计数器递增
+  21   1          
+  22   1          // 每1000ms（1秒）执行一次LED流水
+  23   1          if(timer_count >= 1000)
+  24   1          {
+  25   2              timer_count = 0;  // 重置计数器
+  26   2              
+  27   2              // 根据方向更新LED模式
+  28   2              if(flow_direction == 0)
+  29   2              {
+  30   3                  // 正向流水：D1→D8
+  31   3                  led_pattern = (led_pattern << 1) | 0x01;
+  32   3                  if(led_pattern == 0xFF) 
+  33   3                      led_pattern = 0xFE;  // 回到起始模式
+  34   3              }
+  35   2              else
+  36   2              {
+  37   3                  // 反向流水：D8→D1
+  38   3                  led_pattern = (led_pattern >> 1) | 0x80;
+  39   3                  if(led_pattern == 0x7F) 
+  40   3                      led_pattern = 0x7F;  // 调整边界
+  41   3                  if(led_pattern == 0xFF)
+  42   3                      led_pattern = 0x7F;  // 回到起始模式
+  43   3              }
+  44   2              
+  45   2              // 更新LED显示
+  46   2              LED_PORT = led_pattern;
+  47   2          }
+  48   1      }
+  49          
+  50          /**
+  51           * @brief 系统初始化
+  52           * @param 无
+  53           * @return 无
+  54           */
+C51 COMPILER V9.54   MAIN                                                                  10/03/2025 10:33:09 PAGE 2   
+
+  55          void System_Init(void)
+  56          {
+  57   1          // 外设初始化
+  58   1          Key_Init();
+  59   1          Timer0_Init();
+  60   1          Timer0_SetInterrupt(Timer0_UserISR);
+  61   1          
+  62   1          // 全局中断使能
+  63   1          EA = 1;
+  64   1          
+  65   1          // 初始LED显示
+  66   1          LED_PORT = led_pattern;
+  67   1      }
+  68          
+  69          /**
+  70           * @brief 主函数
+  71           */
+  72          void main(void)
+  73          {
+  74   1          // 系统初始化
+  75   1          System_Init();
+  76   1          
+  77   1          while(1)
+  78   1          {
+  79   2              // 检测独立按键K1
+  80   2              if(Key_Scan())
+  81   2              {
+  82   3                  // 切换流水方向
+  83   3                  flow_direction = ~flow_direction;
+  84   3                  
+  85   3                  // 根据新方向重置LED模式
+  86   3                  if(flow_direction == 0)
+  87   3                  {
+  88   4                      led_pattern = 0xFE;  // 正向起始：D1亮
+  89   4                  }
+  90   3                  else
+  91   3                  {
+  92   4                      led_pattern = 0x7F;  // 反向起始：D8亮
+  93   4                  }
+  94   3                  
+  95   3                  LED_PORT = led_pattern;
+  96   3              }
+  97   2              
+  98   2              // 主循环可以添加其他任务
+  99   2              // 这里保持空循环，所有工作由中断处理
+ 100   2          }
+ 101   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    114    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      3    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

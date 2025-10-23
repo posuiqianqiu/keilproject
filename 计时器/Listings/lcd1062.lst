@@ -1,0 +1,113 @@
+C51 COMPILER V9.54   LCD1062                                                               10/03/2025 11:49:26 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE LCD1062
+OBJECT MODULE PLACED IN .\Objects\lcd1062.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE lcd1062.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\lcd1
+                    -062.lst) TABS(2) OBJECT(.\Objects\lcd1062.obj)
+
+line level    source
+
+   1          #include "lcd1602.h"
+   2          
+   3          // 延时函数
+   4          void LCD_Delay(unsigned int t)
+   5          {
+   6   1          unsigned int i, j;
+   7   1          for(i = 0; i < t; i++)
+   8   1              for(j = 0; j < 120; j++);
+   9   1      }
+  10          
+  11          // 检查LCD忙状态
+  12          void LCD_CheckBusy(void)
+  13          {
+  14   1          unsigned char sta;
+  15   1          LCD_DATA = 0xFF;
+  16   1          LCD_RS = 0;
+  17   1          LCD_RW = 1;
+  18   1          do {
+  19   2              LCD_EN = 1;
+  20   2              sta = LCD_DATA;
+  21   2              LCD_EN = 0;
+  22   2          } while(sta & 0x80);
+  23   1      }
+  24          
+  25          // 写命令到LCD
+  26          void LCD_WriteCmd(unsigned char cmd)
+  27          {
+  28   1          LCD_CheckBusy();
+  29   1          LCD_RS = 0;
+  30   1          LCD_RW = 0;
+  31   1          LCD_DATA = cmd;
+  32   1          LCD_EN = 1;
+  33   1          LCD_EN = 0;
+  34   1      }
+  35          
+  36          // 写数据到LCD
+  37          void LCD_WriteData(unsigned char dat)
+  38          {
+  39   1          LCD_CheckBusy();
+  40   1          LCD_RS = 1;
+  41   1          LCD_RW = 0;
+  42   1          LCD_DATA = dat;
+  43   1          LCD_EN = 1;
+  44   1          LCD_EN = 0;
+  45   1      }
+  46          
+  47          // LCD初始化
+  48          void LCD_Init(void)
+  49          {
+  50   1          LCD_WriteCmd(0x38);    // 设置16x2显示，5x7点阵，8位数据接口
+  51   1          LCD_WriteCmd(0x0C);    // 显示器开，光标关闭，光标闪烁关闭
+  52   1          LCD_WriteCmd(0x06);    // 文字不动，光标自动右移
+  53   1          LCD_WriteCmd(0x01);    // 清屏
+  54   1          LCD_Delay(2);
+C51 COMPILER V9.54   LCD1062                                                               10/03/2025 11:49:26 PAGE 2   
+
+  55   1      }
+  56          
+  57          // 设置光标位置
+  58          void LCD_SetCursor(unsigned char x, unsigned char y)
+  59          {
+  60   1          unsigned char addr;
+  61   1          if(y == 0)
+  62   1              addr = 0x00 + x;
+  63   1          else
+  64   1              addr = 0x40 + x;
+  65   1          LCD_WriteCmd(addr | 0x80);
+  66   1      }
+  67          
+  68          // 显示字符串
+  69          void LCD_ShowStr(unsigned char x, unsigned char y, unsigned char *str)
+  70          {
+  71   1          LCD_SetCursor(x, y);
+  72   1          while(*str != '\0')
+  73   1          {
+  74   2              LCD_WriteData(*str);
+  75   2              str++;
+  76   2          }
+  77   1      }
+  78          
+  79          // 显示数字（00-59格式）
+  80          void LCD_ShowNum(unsigned char x, unsigned char y, unsigned char num)
+  81          {
+  82   1          unsigned char str[3];
+  83   1          str[0] = num / 10 + '0';
+  84   1          str[1] = num % 10 + '0';
+  85   1          str[2] = '\0';
+  86   1          LCD_ShowStr(x, y, str);
+  87   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    180    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

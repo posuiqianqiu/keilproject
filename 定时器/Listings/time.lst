@@ -1,0 +1,72 @@
+C51 COMPILER V9.54   TIME                                                                  10/03/2025 10:30:12 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE TIME
+OBJECT MODULE PLACED IN .\Objects\time.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE time.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\time.ls
+                    -t) TABS(2) OBJECT(.\Objects\time.obj)
+
+line level    source
+
+   1          #include "timer.h"
+*** WARNING C318 IN LINE 1 OF time.c: can't open file 'timer.h'
+   2          
+   3          // 定时器中断函数指针
+   4          void (*Timer0_ISR)(void) = 0;
+   5          
+   6          /**
+   7           * @brief 定时器0初始化
+   8           * @param 无
+   9           * @return 无
+  10           * @说明 使用定时器0，模式1，16位定时，用于精确计时
+  11           */
+  12          void Timer0_Init(void)
+  13          {
+  14   1          TMOD &= 0xF0;   // 清除T0控制位
+*** ERROR C202 IN LINE 14 OF time.c: 'TMOD': undefined identifier
+  15   1          TMOD |= 0x01;   // 设置T0为模式1（16位定时器）
+*** ERROR C202 IN LINE 15 OF time.c: 'TMOD': undefined identifier
+  16   1          
+  17   1          TH0 = T1MS >> 8;  // 设置定时初值高8位
+*** ERROR C202 IN LINE 17 OF time.c: 'TH0': undefined identifier
+  18   1          TL0 = T1MS & 0xFF; // 设置定时初值低8位
+*** ERROR C202 IN LINE 18 OF time.c: 'TL0': undefined identifier
+  19   1          
+  20   1          ET0 = 1;        // 允许T0中断
+*** ERROR C202 IN LINE 20 OF time.c: 'ET0': undefined identifier
+  21   1          TR0 = 1;        // 启动T0
+*** ERROR C202 IN LINE 21 OF time.c: 'TR0': undefined identifier
+  22   1      }
+  23          
+  24          /**
+  25           * @brief 设置定时器0中断服务函数
+  26           * @param func 中断服务函数指针
+  27           * @return 无
+  28           */
+  29          void Timer0_SetInterrupt(void (*func)(void))
+  30          {
+  31   1          Timer0_ISR = func;
+  32   1      }
+  33          
+  34          /**
+  35           * @brief 定时器0中断服务函数
+  36           * @说明 中断号1，使用寄存器组1
+  37           */
+  38          void Timer0_ISR_Handler(void) interrupt 1 using 1
+  39          {
+  40   1          // 重装定时初值
+  41   1          TH0 = T1MS >> 8;
+*** ERROR C202 IN LINE 41 OF time.c: 'TH0': undefined identifier
+  42   1          TL0 = T1MS & 0xFF;
+*** ERROR C202 IN LINE 42 OF time.c: 'TL0': undefined identifier
+  43   1          
+  44   1          // 调用用户定义的中断服务函数
+  45   1          if(Timer0_ISR != 0)
+C51 COMPILER V9.54   TIME                                                                  10/03/2025 10:30:12 PAGE 2   
+
+  46   1          {
+  47   2              Timer0_ISR();
+  48   2          }
+  49   1      }
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  8 ERROR(S)

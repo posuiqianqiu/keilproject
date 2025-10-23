@@ -1,0 +1,91 @@
+C51 COMPILER V9.54   UART                                                                  10/03/2025 18:46:39 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN .\Objects\uart.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE uart.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\uart.ls
+                    -t) TABS(2) OBJECT(.\Objects\uart.obj)
+
+line level    source
+
+   1          #include "UART.h"
+   2          
+   3          /**
+   4           * @brief 串口初始化函数，波特率4800
+   5           */
+   6          void UART_Init(void)
+   7          {
+   8   1          SCON = 0x50;        // 串口工作方式1，8位数据，可变波特率，允许接收
+   9   1          TMOD &= 0x0F;       // 清除定时器1模式位
+  10   1          TMOD |= 0x20;       // 定时器1，工作方式2，8位自动重装
+  11   1          TH1 = 0xFA;         // 波特率4800的定时器重装值(11.0592MHz晶振)
+  12   1          TL1 = 0xFA;         // 波特率4800的定时器重装值
+  13   1          PCON &= 0x7F;       // SMOD=0，波特率不加倍
+  14   1          TR1 = 1;            // 启动定时器1
+  15   1          ES = 1;             // 开启串口中断
+  16   1          EA = 1;             // 开启总中断
+  17   1      }
+  18          
+  19          /**
+  20           * @brief 串口发送一个字节
+  21           * @param dat 要发送的数据
+  22           */
+  23          void UART_SendByte(unsigned char dat)
+  24          {
+  25   1          SBUF = dat;         // 数据送入发送缓冲器
+  26   1          while(!TI);         // 等待发送完成
+  27   1          TI = 0;             // 清除发送中断标志
+  28   1      }
+  29          
+  30          /**
+  31           * @brief 串口发送字符串
+  32           * @param str 要发送的字符串指针
+  33           */
+  34          void UART_SendString(unsigned char *str)
+  35          {
+  36   1          while(*str != '\0')
+  37   1          {
+  38   2              UART_SendByte(*str);
+  39   2              str++;
+  40   2          }
+  41   1      }
+  42          
+  43          /**
+  44           * @brief 串口接收一个字节（查询方式）
+  45           * @return 接收到的数据
+  46           */
+  47          unsigned char UART_ReceiveByte(void)
+  48          {
+  49   1          unsigned char dat;
+  50   1          while(!RI);         // 等待接收完成
+  51   1          dat = SBUF;         // 读取接收数据
+  52   1          RI = 0;             // 清除接收中断标志
+  53   1          return dat;
+  54   1      }
+C51 COMPILER V9.54   UART                                                                  10/03/2025 18:46:39 PAGE 2   
+
+  55          
+  56          /**
+  57           * @brief 毫秒级延时函数
+  58           * @param ms 延时的毫秒数
+  59           */
+  60          void Delayms(unsigned int ms)
+  61          {
+  62   1          unsigned int i, j;
+  63   1          for(i = ms; i > 0; i--)
+  64   1              for(j = 114; j > 0; j--);
+  65   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     90    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

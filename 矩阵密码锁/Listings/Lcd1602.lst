@@ -1,0 +1,227 @@
+C51 COMPILER V9.54   LCD1602                                                               10/02/2025 12:19:39 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE LCD1602
+OBJECT MODULE PLACED IN .\Objects\Lcd1602.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE Lcd1602.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\Lcd1
+                    -602.lst) TABS(2) OBJECT(.\Objects\Lcd1602.obj)
+
+line level    source
+
+   1          #include "lcd1602.h"
+   2          #include <intrins.h>
+   3          
+   4          // 自定义延时函数，用于LCD时序控制
+   5          void LCD_Delay(unsigned int t)
+   6          {
+   7   1          while(t--);
+   8   1      }
+   9          
+  10          // 检查LCD忙状态
+  11          bit LCD_CheckBusy()
+  12          {
+  13   1          bit result;
+  14   1          LCD_DATA = 0xFF;    // 准备读取数据
+  15   1          LCD_RS = 0;         // 选择命令寄存器
+  16   1          LCD_RW = 1;         // 设置为读模式
+  17   1          LCD_EN = 1;         // 使能信号
+  18   1          _nop_();            // 短暂延时
+  19   1          result = (bit)(LCD_DATA & 0x80);  // 读取忙标志位（最高位）
+  20   1          LCD_EN = 0;         // 关闭使能
+  21   1          return result;      // 返回忙状态
+  22   1      }
+  23          
+  24          // 向LCD写入命令
+  25          void LCD_WriteCmd(unsigned char cmd)
+  26          {
+  27   1          while(LCD_CheckBusy());  // 等待LCD不忙
+  28   1          
+  29   1          LCD_RS = 0;         // 选择命令寄存器
+  30   1          LCD_RW = 0;         // 设置为写模式
+  31   1          LCD_EN = 0;         // 使能信号置低
+  32   1          LCD_DATA = cmd;     // 写入命令
+  33   1          _nop_();            // 短暂延时
+  34   1          LCD_EN = 1;         // 产生使能脉冲
+  35   1          _nop_();
+  36   1          LCD_EN = 0;
+  37   1          LCD_Delay(5);       // 命令执行延时
+  38   1      }
+  39          
+  40          // 向LCD写入数据
+  41          void LCD_WriteData(unsigned char dat)
+  42          {
+  43   1          while(LCD_CheckBusy());  // 等待LCD不忙
+  44   1          
+  45   1          LCD_RS = 1;         // 选择数据寄存器
+  46   1          LCD_RW = 0;         // 设置为写模式
+  47   1          LCD_EN = 0;         // 使能信号置低
+  48   1          LCD_DATA = dat;     // 写入数据
+  49   1          _nop_();            // 短暂延时
+  50   1          LCD_EN = 1;         // 产生使能脉冲
+  51   1          _nop_();
+  52   1          LCD_EN = 0;
+  53   1          LCD_Delay(5);       // 数据写入延时
+  54   1      }
+C51 COMPILER V9.54   LCD1602                                                               10/02/2025 12:19:39 PAGE 2   
+
+  55          
+  56          // LCD1602初始化
+  57          void LCD_Init()
+  58          {
+  59   1          LCD_Delay(1500);    // 上电延时，等待LCD稳定
+  60   1          
+  61   1          // 初始化序列
+  62   1          LCD_WriteCmd(0x38); // 设置16x2显示，5x7点阵，8位数据接口
+  63   1          LCD_WriteCmd(0x0C); // 显示器开，光标关闭，闪烁关闭
+  64   1          LCD_WriteCmd(0x06); // 文字不动，地址自动+1
+  65   1          LCD_WriteCmd(0x01); // 清屏
+  66   1          LCD_Delay(500);     // 清屏延时
+  67   1      }
+  68          
+  69          // 清屏函数
+  70          void LCD_Clear()
+  71          {
+  72   1          LCD_WriteCmd(0x01); // 清屏命令
+  73   1          LCD_Delay(500);     // 清屏需要较长时间
+  74   1      }
+  75          
+  76          // 设置显示位置
+  77          void LCD_SetCursor(unsigned char x, unsigned char y)
+  78          {
+  79   1          unsigned char addr;
+  80   1          
+  81   1          if (x == 0)
+  82   1              addr = 0x80 + y;    // 第一行地址从0x80开始
+  83   1          else
+  84   1              addr = 0xC0 + y;    // 第二行地址从0xC0开始
+  85   1              
+  86   1          LCD_WriteCmd(addr);     // 设置DDRAM地址
+  87   1      }
+  88          
+  89          // 显示字符串
+  90          void LCD_ShowString(unsigned char x, unsigned char y, unsigned char *str)
+  91          {
+  92   1          LCD_SetCursor(x, y);    // 设置起始位置
+  93   1          
+  94   1          while (*str != '\0')    // 遍历字符串直到结束符
+  95   1          {
+  96   2              LCD_WriteData(*str); // 显示当前字符
+  97   2              str++;              // 指向下一个字符
+  98   2          }
+  99   1      }
+ 100          
+ 101          // 显示数字
+ 102          void LCD_ShowNum(unsigned char x, unsigned char y, unsigned int num, unsigned char len)
+ 103          {
+ 104   1          unsigned char i;
+ 105   1          unsigned char num_str[6]; // 存储数字字符串
+ 106   1          
+ 107   1          // 将数字转换为字符串
+ 108   1          for (i = 0; i < len; i++)
+ 109   1          {
+ 110   2              num_str[len-1-i] = num % 10 + '0'; // 从个位开始处理
+ 111   2              num /= 10;
+ 112   2          }
+ 113   1          num_str[len] = '\0'; // 字符串结束符
+ 114   1          
+ 115   1          LCD_ShowString(x, y, num_str); // 显示数字字符串
+ 116   1      }
+C51 COMPILER V9.54   LCD1602                                                               10/02/2025 12:19:39 PAGE 3   
+
+ 117          
+ 118          // 显示有符号数字
+ 119          void LCD_ShowSignedNum(unsigned char x, unsigned char y, int num, unsigned char len)
+ 120          {
+ 121   1          if (num < 0)
+ 122   1          {
+ 123   2              LCD_ShowChar(x, y, '-');    // 显示负号
+ 124   2              num = -num;                 // 取绝对值
+ 125   2              LCD_ShowNum(x, y+1, (unsigned int)num, len-1); // 显示数字部分
+ 126   2          }
+ 127   1          else
+ 128   1          {
+ 129   2              LCD_ShowChar(x, y, '+');    // 显示正号
+ 130   2              LCD_ShowNum(x, y+1, (unsigned int)num, len-1); // 显示数字部分
+ 131   2          }
+ 132   1      }
+ 133          
+ 134          // 显示十六进制数字
+ 135          void LCD_ShowHexNum(unsigned char x, unsigned char y, unsigned int num, unsigned char len)
+ 136          {
+ 137   1          unsigned char i, temp;
+ 138   1          unsigned char hex_str[5] = "0x"; // 十六进制前缀
+ 139   1          
+ 140   1          // 转换十六进制数字
+ 141   1          for (i = 0; i < len; i++)
+ 142   1          {
+ 143   2              temp = (num >> ((len-1-i)*4)) & 0x0F; // 提取4位
+ 144   2              if (temp < 10)
+ 145   2                  hex_str[2+i] = temp + '0';        // 0-9
+ 146   2              else
+ 147   2                  hex_str[2+i] = temp - 10 + 'A';   // A-F
+ 148   2          }
+ 149   1          hex_str[2+len] = '\0'; // 字符串结束符
+ 150   1          
+ 151   1          LCD_ShowString(x, y, hex_str); // 显示十六进制字符串
+ 152   1      }
+ 153          
+ 154          // 显示字符
+ 155          void LCD_ShowChar(unsigned char x, unsigned char y, unsigned char chr)
+ 156          {
+ 157   1          LCD_SetCursor(x, y);    // 设置显示位置
+ 158   1          LCD_WriteData(chr);     // 显示字符
+ 159   1      }
+ 160          
+ 161          // 显示浮点数
+ 162          void LCD_ShowFloat(unsigned char x, unsigned char y, float fnum, unsigned char int_len, unsigned char dec_
+             -len)
+ 163          {
+ 164   1          unsigned int int_part, dec_part;
+ 165   1          float temp;
+ 166   1          
+ 167   1          // 处理整数部分
+ 168   1          if (fnum < 0)
+ 169   1          {
+ 170   2              LCD_ShowChar(x, y, '-');    // 显示负号
+ 171   2              fnum = -fnum;               // 取绝对值
+ 172   2              y++;                        // 列位置后移
+ 173   2          }
+ 174   1          else
+ 175   1          {
+ 176   2              LCD_ShowChar(x, y, '+');    // 显示正号
+ 177   2              y++;                        // 列位置后移
+C51 COMPILER V9.54   LCD1602                                                               10/02/2025 12:19:39 PAGE 4   
+
+ 178   2          }
+ 179   1          
+ 180   1          int_part = (unsigned int)fnum;  // 提取整数部分
+ 181   1          LCD_ShowNum(x, y, int_part, int_len); // 显示整数部分
+ 182   1          
+ 183   1          // 显示小数点
+ 184   1          LCD_ShowChar(x, y + int_len, '.');
+ 185   1          
+ 186   1          // 处理小数部分
+ 187   1          temp = fnum - int_part;         // 提取小数部分
+ 188   1          for (dec_len = dec_len; dec_len > 0; dec_len--)
+ 189   1          {
+ 190   2              temp *= 10;                 // 移动小数点
+ 191   2          }
+ 192   1          dec_part = (unsigned int)temp;  // 转换为整数
+ 193   1          
+ 194   1          // 显示小数部分
+ 195   1          LCD_ShowNum(x, y + int_len + 1, dec_part, dec_len);
+ 196   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    658    ----
+   CONSTANT SIZE    =      5    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      44
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       1
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

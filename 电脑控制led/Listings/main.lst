@@ -1,0 +1,162 @@
+C51 COMPILER V9.54   MAIN                                                                  10/03/2025 19:01:02 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.ls
+                    -t) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include "UART.h"
+   2          #include "LED.h"
+   3          #include <string.h>
+   4          #include <stdlib.h>
+   5          
+   6          // 全局变量
+   7          unsigned char received_data = 0;
+   8          unsigned char uart_buffer[10];
+   9          unsigned char buffer_index = 0;
+  10          bit number_received = 0;
+  11          
+  12          /**
+  13           * @brief 串口中断服务函数
+  14           */
+  15          void UART_Interrupt(void) interrupt 4
+  16          {
+  17   1          if(RI == 1)
+  18   1          {
+  19   2              RI = 0;
+  20   2              unsigned char ch = SBUF;
+*** ERROR C141 IN LINE 20 OF main.c: syntax error near 'unsigned'
+*** ERROR C202 IN LINE 20 OF main.c: 'ch': undefined identifier
+  21   2              
+  22   2              // 回显字符
+  23   2              UART_SendByte(ch);
+*** ERROR C202 IN LINE 23 OF main.c: 'ch': undefined identifier
+  24   2              
+  25   2              // 如果是回车或换行，表示数字输入完成
+  26   2              if(ch == '\r' || ch == '\n')
+*** ERROR C202 IN LINE 26 OF main.c: 'ch': undefined identifier
+  27   2              {
+  28   3                  if(buffer_index > 0)
+  29   3                  {
+  30   4                      uart_buffer[buffer_index] = '\0'; // 字符串结束符
+  31   4                      number_received = 1; // 设置标志位
+  32   4                      buffer_index = 0;
+  33   4                  }
+  34   3              }
+  35   2              // 如果是数字，存入缓冲区
+  36   2              else if(ch >= '0' && ch <= '9')
+*** ERROR C202 IN LINE 36 OF main.c: 'ch': undefined identifier
+  37   2              {
+  38   3                  if(buffer_index < sizeof(uart_buffer)-1)
+  39   3                  {
+  40   4                      uart_buffer[buffer_index++] = ch;
+*** ERROR C202 IN LINE 40 OF main.c: 'ch': undefined identifier
+  41   4                  }
+  42   3              }
+  43   2              // 如果是退格键，删除最后一个字符
+  44   2              else if(ch == 0x08 || ch == 0x7F) // 退格或删除键
+*** ERROR C202 IN LINE 44 OF main.c: 'ch': undefined identifier
+  45   2              {
+  46   3                  if(buffer_index > 0)
+  47   3                  {
+C51 COMPILER V9.54   MAIN                                                                  10/03/2025 19:01:02 PAGE 2   
+
+  48   4                      buffer_index--;
+  49   4                      UART_SendByte(' ');
+  50   4                      UART_SendByte(0x08);
+  51   4                  }
+  52   3              }
+  53   2          }
+  54   1          
+  55   1          if(TI == 1)
+  56   1          {
+  57   2              TI = 0;
+  58   2          }
+  59   1      }
+  60          
+  61          /**
+  62           * @brief 将字符串转换为数字
+  63           * @param str 数字字符串
+  64           * @return 转换后的数字
+  65           */
+  66          unsigned char StringToNumber(unsigned char *str)
+  67          {
+  68   1          unsigned char result = 0;
+  69   1          while(*str >= '0' && *str <= '9')
+  70   1          {
+  71   2              result = result * 10 + (*str - '0');
+  72   2              str++;
+  73   2          }
+  74   1          return result;
+  75   1      }
+  76          
+  77          void main(void)
+  78          {
+  79   1          UART_Init();
+  80   1          LED_Init();
+  81   1          
+  82   1          UART_SendString("=== LED二进制显示器 ===\r\n");
+  83   1          UART_SendString("请输入0-255之间的数字，按回车结束:\r\n");
+  84   1          UART_SendString("例如: 输入255然后按回车\r\n");
+  85   1          UART_SendString("=======================\r\n");
+  86   1          
+  87   1          while(1)
+  88   1          {
+  89   2              if(number_received)
+  90   2              {
+  91   3                  number_received = 0;
+  92   3                  
+  93   3                  // 将字符串转换为数字
+  94   3                  received_data = StringToNumber(uart_buffer);
+  95   3                  
+  96   3                  UART_SendString("\r\n转换后的数字: ");
+  97   3                  UART_SendByte('0' + (received_data / 100));
+  98   3                  UART_SendByte('0' + ((received_data / 10) % 10));
+  99   3                  UART_SendByte('0' + (received_data % 10));
+ 100   3                  UART_SendString(" (0x");
+ 101   3                  
+ 102   3                  // 发送十六进制表示
+ 103   3                  unsigned char high = received_data / 16;
+*** ERROR C141 IN LINE 103 OF main.c: syntax error near 'unsigned'
+*** ERROR C202 IN LINE 103 OF main.c: 'high': undefined identifier
+ 104   3                  unsigned char low = received_data % 16;
+*** ERROR C141 IN LINE 104 OF main.c: syntax error near 'unsigned'
+*** ERROR C202 IN LINE 104 OF main.c: 'low': undefined identifier
+ 105   3                  UART_SendByte(high < 10 ? '0' + high : 'A' + high - 10);
+C51 COMPILER V9.54   MAIN                                                                  10/03/2025 19:01:02 PAGE 3   
+
+*** ERROR C202 IN LINE 105 OF main.c: 'high': undefined identifier
+ 106   3                  UART_SendByte(low < 10 ? '0' + low : 'A' + low - 10);
+*** ERROR C202 IN LINE 106 OF main.c: 'low': undefined identifier
+ 107   3                  UART_SendString(")\r\n");
+ 108   3                  
+ 109   3                  UART_SendString("二进制: ");
+ 110   3                  // 发送二进制表示
+ 111   3                  unsigned char i;
+*** ERROR C141 IN LINE 111 OF main.c: syntax error near 'unsigned'
+*** ERROR C202 IN LINE 111 OF main.c: 'i': undefined identifier
+ 112   3                  for(i = 0; i < 8; i++)
+*** ERROR C202 IN LINE 112 OF main.c: 'i': undefined identifier
+ 113   3                  {
+ 114   4                      if(received_data & (0x80 >> i))
+*** ERROR C202 IN LINE 114 OF main.c: 'i': undefined identifier
+ 115   4                          UART_SendByte('1');
+ 116   4                      else
+ 117   4                          UART_SendByte('0');
+ 118   4                  }
+ 119   3                  UART_SendString("\r\n");
+ 120   3                  
+ 121   3                  // 控制LED显示
+ 122   3                  LED_DisplayBinary(received_data);
+ 123   3                  
+ 124   3                  UART_SendString("请继续输入数字: ");
+ 125   3              }
+ 126   2              
+ 127   2              Delayms(10);
+ 128   2          }
+ 129   1      }
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  17 ERROR(S)

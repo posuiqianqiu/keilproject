@@ -1,0 +1,65 @@
+C51 COMPILER V9.54   MAIN                                                                  10/01/2025 12:08:18 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE main.c ROM(SMALL) OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          
+   3          sbit LED = P2^0;    // LED连接到P2.0
+   4          sbit KEY = P3^1;    // 独立按键K1连接到P3.2
+   5          
+   6          // 简单延时函数
+   7          void delay_ms(unsigned int ms)
+   8          {
+   9   1          unsigned int i, j;
+  10   1          for(i = 0; i < ms; i++)
+  11   1              for(j = 0; j < 123; j++);
+  12   1      }
+  13          
+  14          void main()
+  15          {
+  16   1          LED = 1;        // 初始化LED熄灭
+  17   1          KEY = 1;        // 设置按键引脚为输入模式
+  18   1          
+  19   1          while(1)
+  20   1          {
+  21   2              if(KEY == 0)        // 第一次检测到按键按下
+  22   2              {
+  23   3                  delay_ms(10);   // 延时10ms消抖
+  24   3                  if(KEY == 0)    // 再次确认按键确实按下
+  25   3                  {
+  26   4                      LED = 0;    // 按键按下，LED亮
+  27   4                      
+  28   4                      // 等待按键释放
+  29   4                      while(KEY == 0)
+  30   4                      {
+  31   5                          // 可以在这里添加其他功能
+  32   5                      }
+  33   4                      delay_ms(10);   // 释放消抖
+  34   4                  }
+  35   3              }
+  36   2              else
+  37   2              {
+  38   3                  LED = 1;    // 按键松开，LED灭
+  39   3              }
+  40   2          }
+  41   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     65    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

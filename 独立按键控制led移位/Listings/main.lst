@@ -1,0 +1,98 @@
+C51 COMPILER V9.54   MAIN                                                                  10/01/2025 20:48:32 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE main.c ROM(SMALL) OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\main.lst) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include <intrins.h>  // 包含循环移位函数
+   3          
+   4          sbit K1 = P3^1;     // 右移按键
+   5          sbit K2 = P3^0;     // 左移按键
+   6          
+   7          unsigned char led_pattern = 0x01;  // LED模式
+   8          
+   9          void delay_ms(unsigned int ms)
+  10          {
+  11   1          unsigned int i, j;
+  12   1          for(i = 0; i < ms; i++)
+  13   1              for(j = 0; j < 123; j++);
+  14   1      }
+  15          
+  16          // K1按键检测函数
+  17          bit key_scan_K1(void)
+  18          {
+  19   1          if(K1 == 0)
+  20   1          {
+  21   2              delay_ms(10);
+  22   2              if(K1 == 0)
+  23   2              {
+  24   3                  while(!K1);    // 等待按键释放
+  25   3                  delay_ms(10);
+  26   3                  return 1;
+  27   3              }
+  28   2          }
+  29   1          return 0;
+  30   1      }
+  31          
+  32          // K2按键检测函数
+  33          bit key_scan_K2(void)
+  34          {
+  35   1          if(K2 == 0)
+  36   1          {
+  37   2              delay_ms(10);
+  38   2              if(K2 == 0)
+  39   2              {
+  40   3                  while(!K2);    // 等待按键释放
+  41   3                  delay_ms(10);
+  42   3                  return 1;
+  43   3              }
+  44   2          }
+  45   1          return 0;
+  46   1      }
+  47          
+  48          void main()
+  49          {
+  50   1          P2 = 0xFF;      // 初始所有LED熄灭
+  51   1          K1 = 1;
+  52   1          K2 = 1;
+  53   1          
+  54   1          P2 = ~led_pattern;  // 初始显示
+C51 COMPILER V9.54   MAIN                                                                  10/01/2025 20:48:32 PAGE 2   
+
+  55   1          
+  56   1          while(1)
+  57   1          {
+  58   2              if(key_scan_K1())
+  59   2              {
+  60   3                  // 循环右移
+  61   3                  led_pattern = _cror_(led_pattern, 1);
+  62   3                  P2 = ~led_pattern;
+  63   3              }
+  64   2              
+  65   2              if(key_scan_K2())
+  66   2              {
+  67   3                  // 循环左移
+  68   3                  led_pattern = _crol_(led_pattern, 1);
+  69   3                  P2 = ~led_pattern;
+  70   3              }
+  71   2          }
+  72   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    126    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      1    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,71 @@
+C51 COMPILER V9.54   KEY                                                                   10/03/2025 10:30:12 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN .\Objects\key.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE key.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\key.lst)
+                    - TABS(2) OBJECT(.\Objects\key.obj)
+
+line level    source
+
+   1          #include "key.h"
+   2          
+   3          /**
+   4           * @brief 独立按键初始化
+   5           * @param 无
+   6           * @return 无
+   7           */
+   8          void Key_Init(void)
+   9          {
+  10   1          // P3口默认有上拉电阻，无需额外初始化
+  11   1      }
+  12          
+  13          /**
+  14           * @brief 独立按键扫描函数（带消抖）
+  15           * @param 无
+  16           * @return 1:按键按下 0:无按键
+  17           */
+  18          bit Key_Scan(void)
+  19          {
+  20   1          static bit key_state = 0;  // 按键状态记录
+  21   1          
+  22   1          if(K1 == 0)  // 检测按键是否按下
+  23   1          {
+  24   2              // 延时消抖
+  25   2              {
+  26   3                  unsigned int i;
+  27   3                  for(i = 0; i < 1000; i++);
+  28   3              }
+  29   2              
+  30   2              if(K1 == 0)  // 再次确认按键按下
+  31   2              {
+  32   3                  if(key_state == 0)  // 检测按键状态变化（下降沿）
+  33   3                  {
+  34   4                      key_state = 1;
+  35   4                      return 1;  // 返回按键按下信号
+  36   4                  }
+  37   3              }
+  38   2          }
+  39   1          else
+  40   1          {
+  41   2              key_state = 0;  // 按键释放
+  42   2          }
+  43   1          
+  44   1          return 0;  // 无按键按下
+  45   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     39    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       2
+   IDATA SIZE       =   ----    ----
+C51 COMPILER V9.54   KEY                                                                   10/03/2025 10:30:12 PAGE 2   
+
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

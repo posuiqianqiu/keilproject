@@ -1,0 +1,204 @@
+C51 COMPILER V9.54   MOTOR                                                                 10/04/2025 23:06:16 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MOTOR
+OBJECT MODULE PLACED IN .\Objects\motor.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE motor.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\motor.
+                    -lst) TABS(2) OBJECT(.\Objects\motor.obj)
+
+line level    source
+
+   1          #include "motor.h"
+   2          
+   3          // 全局变量定义
+   4          unsigned char current_gear = 0;    // 当前档位
+   5          unsigned int timer0_count = 0;     // 定时器计数
+   6          unsigned char pwm_duty = 0;        // PWM占空比
+   7          
+   8          // 共阴数码管段码表 (0-5)
+   9          unsigned char code seg_table[] = {
+  10              0x3F,  // 0
+  11              0x06,  // 1  
+  12              0x5B,  // 2
+  13              0x4F,  // 3
+  14              0x66,  // 4
+  15              0x6D   // 5
+  16          };
+  17          
+  18          /**
+  19           * @brief 系统初始化函数
+  20           */
+  21          void System_Init(void)
+  22          {
+  23   1          MOTOR = 0;          // 电机初始关闭
+  24   1          DIG_SEG = 0x00;     // 数码管初始不显示
+  25   1          
+  26   1          // 数码管位选初始化 - 只开启最左侧数码管
+  27   1          DIG_WEI1 = 1;
+  28   1          DIG_WEI2 = 1;
+  29   1          DIG_WEI3 = 1;
+  30   1          
+  31   1          Timer0_Init();      // 定时器0初始化
+  32   1      }
+  33          
+  34          /**
+  35           * @brief 定时器0初始化函数
+  36           * 工作模式1，16位定时器，用于PWM生成
+  37           */
+  38          void Timer0_Init(void)
+  39          {
+  40   1          TMOD &= 0xF0;       // 设置定时器0模式
+  41   1          TMOD |= 0x01;       // 定时器0工作模式1
+  42   1          
+  43   1          TH0 = 0xFC;         // 定时1ms的初值 (11.0592MHz)
+  44   1          TL0 = 0x66;
+  45   1          
+  46   1          ET0 = 1;            // 开启定时器0中断
+  47   1          EA = 1;             // 开启总中断
+  48   1          TR0 = 1;            // 启动定时器0
+  49   1      }
+  50          
+  51          /**
+  52           * @brief 延时函数
+  53           * @param ms 延时毫秒数
+  54           */
+C51 COMPILER V9.54   MOTOR                                                                 10/04/2025 23:06:16 PAGE 2   
+
+  55          void Delay_ms(unsigned int ms)
+  56          {
+  57   1          unsigned int i, j;
+  58   1          for(i = 0; i < ms; i++)
+  59   1              for(j = 0; j < 114; j++);
+  60   1      }
+  61          
+  62          /**
+  63           * @brief 数码管显示函数
+  64           * @param gear 要显示的档位(0-5)
+  65           */
+  66          void Display_Gear(unsigned char gear)
+  67          {
+  68   1          if(gear <= 5) {
+  69   2              DIG_SEG = seg_table[gear];  // 显示对应数字
+  70   2          }
+  71   1      }
+  72          
+  73          /**
+  74           * @brief 按键扫描函数
+  75           * @return 按键状态：1-按键按下，0-无按键
+  76           */
+  77          unsigned char Key_Scan(void)
+  78          {
+  79   1          static unsigned char key_flag = 0;  // 按键标志位
+  80   1          
+  81   1          if(KEY1 == 0) {         // 检测按键是否按下
+  82   2              Delay_ms(10);       // 延时消抖
+  83   2              if(KEY1 == 0) {     // 再次确认按键按下
+  84   3                  if(key_flag == 0) {
+  85   4                      key_flag = 1;
+  86   4                      return 1;   // 返回按键按下信号
+  87   4                  }
+  88   3              }
+  89   2          } else {
+  90   2              key_flag = 0;       // 按键释放，标志位清零
+  91   2          }
+  92   1          return 0;               // 无按键按下
+  93   1      }
+  94          
+  95          /**
+  96           * @brief 电机控制函数
+  97           * @param gear 档位(0-5)
+  98           */
+  99          void Motor_Control(unsigned char gear)
+ 100          {
+ 101   1          switch(gear) {
+ 102   2              case GEAR_0:    // 0档 - 停止
+ 103   2                  pwm_duty = 0;
+ 104   2                  break;
+ 105   2              case GEAR_1:    // 1档 - 20%占空比
+ 106   2                  pwm_duty = 20;
+ 107   2                  break;
+ 108   2              case GEAR_2:    // 2档 - 40%占空比
+ 109   2                  pwm_duty = 40;
+ 110   2                  break;
+ 111   2              case GEAR_3:    // 3档 - 60%占空比
+ 112   2                  pwm_duty = 60;
+ 113   2                  break;
+ 114   2              case GEAR_4:    // 4档 - 80%占空比
+ 115   2                  pwm_duty = 80;
+ 116   2                  break;
+C51 COMPILER V9.54   MOTOR                                                                 10/04/2025 23:06:16 PAGE 3   
+
+ 117   2              case GEAR_5:    // 5档 - 100%占空比
+ 118   2                  pwm_duty = 100;
+ 119   2                  break;
+ 120   2              default:        // 默认停止
+ 121   2                  pwm_duty = 0;
+ 122   2                  break;
+ 123   2          }
+ 124   1      }
+ 125          
+ 126          /**
+ 127           * @brief 定时器0中断服务函数
+ 128           * 用于生成PWM信号控制电机转速
+ 129           */
+ 130          void Timer0_ISR(void) interrupt 1
+ 131          {
+ 132   1          static unsigned int pwm_count = 0;
+ 133   1          
+ 134   1          // 重装定时器初值
+ 135   1          TH0 = 0xFC;
+ 136   1          TL0 = 0x66;
+ 137   1          
+ 138   1          timer0_count++;
+ 139   1          pwm_count++;
+ 140   1          
+ 141   1          if(pwm_count >= 100) {  // PWM周期为100个定时器周期
+ 142   2              pwm_count = 0;
+ 143   2          }
+ 144   1          
+ 145   1          // PWM输出控制
+ 146   1          if(pwm_count < pwm_duty) {
+ 147   2              MOTOR = 1;          // 高电平，电机转动
+ 148   2          } else {
+ 149   2              MOTOR = 0;          // 低电平，电机停止
+ 150   2          }
+ 151   1      }
+ 152          
+ 153          /**
+ 154           * @brief 主函数
+ 155           */
+ 156          void main(void)
+ 157          {
+ 158   1          System_Init();          // 系统初始化
+ 159   1          Display_Gear(0);        // 初始显示0档
+ 160   1          
+ 161   1          while(1) {
+ 162   2              // 按键检测
+ 163   2              if(Key_Scan()) {
+ 164   3                  current_gear++;             // 档位增加
+ 165   3                  if(current_gear > 5) {      // 档位循环
+ 166   4                      current_gear = 0;
+ 167   4                  }
+ 168   3                  
+ 169   3                  Motor_Control(current_gear);    // 控制电机
+ 170   3                  Display_Gear(current_gear);     // 更新显示
+ 171   3                  Delay_ms(300);                  // 按键响应延时
+ 172   3              }
+ 173   2          }
+ 174   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    260    ----
+C51 COMPILER V9.54   MOTOR                                                                 10/04/2025 23:06:16 PAGE 4   
+
+   CONSTANT SIZE    =      6    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      7    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

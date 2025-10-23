@@ -1,0 +1,5 @@
+".\Objects\main.obj",
+".\Objects\timer.obj",
+".\Objects\lcd1062.obj" 
+TO ".\Objects\project" 
+PRINT(".\Listings\project.m51") RAMSIZE(256) 
